@@ -1098,20 +1098,24 @@
       <!-- CMS Sub-Navigation Tabs -->
       <div class="flex flex-wrap bg-slate-100 p-1.5 rounded-2xl gap-1.5 w-fit">
         <button type="button" id="cmsTabBtn-articles" onclick="switchCmsTab('articles')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition tab-active">
-          ✍️ 1. Đăng &amp; Quản lý Bài viết Y khoa (<span id="cmsArticleCount">0</span>)
+          ✍️ 1. Bài viết Y khoa (<span id="cmsArticleCount">0</span>)
         </button>
         <button type="button" id="cmsTabBtn-chatinbox" onclick="switchCmsTab('chatinbox')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition flex items-center gap-1.5">
-          💬 2. Quản lý Chat Box &amp; File Khách hàng gửi (<span id="cmsChatMsgCount">0</span>)
+          💬 2. Chat &amp; File gửi (<span id="cmsChatMsgCount">0</span>)
           <span id="cmsUnreadDot" class="hidden px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-extrabold">MỚI</span>
         </button>
+        <button type="button" id="cmsTabBtn-sheetrecords" onclick="switchCmsTab('sheetrecords')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition flex items-center gap-1.5">
+          📋 3. Hồ sơ Đặt lịch Google Sheet (<span id="cmsSheetRecordCount">0</span>)
+          <span id="cmsNewBookingBadge" class="hidden px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold">MỚI</span>
+        </button>
         <button type="button" id="cmsTabBtn-siteinfo" onclick="switchCmsTab('siteinfo')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition">
-          🏥 3. Sửa SĐT, STK Ngân hàng &amp; Thông tin Web
+          🏥 4. Sửa SĐT, STK &amp; Thông tin Web
         </button>
         <button type="button" id="cmsTabBtn-googlesheet" onclick="switchCmsTab('googlesheet')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition flex items-center gap-1.5">
-          📊 4. Tích hợp Google Sheets
+          📊 5. Cài đặt Google Sheets
         </button>
         <button type="button" id="cmsTabBtn-backup" onclick="switchCmsTab('backup')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition">
-          💾 5. Sao lưu &amp; Xuất bản File index.html
+          💾 6. Xuất bản index.html
         </button>
       </div>
 
@@ -1264,7 +1268,145 @@
       </div>
 
       <!-- =====================================================
-           CMS TAB 3: CLINIC & PROFILE CONFIGURATION
+           CMS TAB 3: GOOGLE SHEET PATIENT BOOKING RECORDS & MANAGEMENT
+           ===================================================== -->
+      <div id="cmsPane-sheetrecords" class="hidden space-y-6">
+        <!-- Top Summary & Control Bar -->
+        <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-5">
+          <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-extrabold uppercase">
+                <span>📋</span> Quản Lý Toàn Bộ Hồ Sơ Người Dùng Đã Gửi (Google Sheet)
+              </div>
+              <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2">
+                Hồ Sơ Đăng Ký Tư Vấn &amp; Đặt Lịch Khám Của Bệnh Nhân
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                Dữ liệu được lưu trữ tự động trên Google Sheet và đồng bộ trực tiếp vào giao diện quản trị của BS. Phạm Tấn Trà.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button type="button" onclick="refreshGoogleSheetRecords()" id="btnRefreshSheetRecords" class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100 transition flex items-center gap-1.5 shadow-sm">
+                <span>🔄</span> Tải Lại Từ Google Sheet
+              </button>
+              <button type="button" onclick="exportConsultCSV()" class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition flex items-center gap-1.5 shadow-sm">
+                <span>📥</span> Xuất File Excel / CSV
+              </button>
+              <button type="button" onclick="openDirectGoogleSheet()" class="px-4 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm text-white tea-gradient shadow hover:opacity-95 transition flex items-center gap-1.5">
+                <span>↗</span> Mở Google Sheet Gốc
+              </button>
+            </div>
+          </div>
+
+          <!-- Statistics Badges Row -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+              <span class="text-xs text-slate-500 font-semibold block">Tổng số hồ sơ</span>
+              <strong id="statSheetTotal" class="text-2xl font-extrabold text-slate-900 mt-1 block">0</strong>
+              <span class="text-[10px] text-slate-400">Tất cả yêu cầu</span>
+            </div>
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center">
+              <span class="text-xs text-amber-800 font-semibold block">Chờ liên hệ</span>
+              <strong id="statSheetPending" class="text-2xl font-extrabold text-amber-900 mt-1 block">0</strong>
+              <span class="text-[10px] text-amber-600">Cần Bác sĩ phản hồi</span>
+            </div>
+            <div class="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-center">
+              <span class="text-xs text-sky-800 font-semibold block">Đang tư vấn</span>
+              <strong id="statSheetConsulting" class="text-2xl font-extrabold text-sky-900 mt-1 block">0</strong>
+              <span class="text-[10px] text-sky-600">Đang trao đổi 1:1</span>
+            </div>
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
+              <span class="text-xs text-emerald-800 font-semibold block">Đã hoàn tất</span>
+              <strong id="statSheetCompleted" class="text-2xl font-extrabold text-emerald-900 mt-1 block">0</strong>
+              <span class="text-[10px] text-emerald-600">Đã gửi phác đồ</span>
+            </div>
+          </div>
+
+          <!-- Search & Filter Controls -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div class="sm:col-span-6 relative">
+                <input type="text" id="sheetSearchInput" oninput="applySheetRecordsFilter()" placeholder="🔍 Tìm theo Họ tên, SĐT, Mã phiếu (DRTEA-...), Triệu chứng..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs sm:text-sm pl-9 bg-white" />
+                <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+              </div>
+              <div class="sm:col-span-3">
+                <select id="sheetFilterSpecialty" onchange="applySheetRecordsFilter()" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-xs sm:text-sm bg-white font-medium">
+                  <option value="all">Tất cả chuyên mục</option>
+                  <option value="oncology">🎗️ Ung bướu &amp; Tầm soát</option>
+                  <option value="internal">🩺 Nội khoa &amp; Chuyển hóa</option>
+                  <option value="lab">🔬 Giải mã xét nghiệm &amp; Viêm gan B</option>
+                  <option value="palliative">🌿 Chăm sóc giảm nhẹ</option>
+                </select>
+              </div>
+              <div class="sm:col-span-3">
+                <select id="sheetFilterStatus" onchange="applySheetRecordsFilter()" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-xs sm:text-sm bg-white font-medium">
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="Chờ liên hệ">⏳ Chờ liên hệ</option>
+                  <option value="Đang tư vấn">💬 Đang tư vấn</option>
+                  <option value="Đã hoàn tất">✅ Đã hoàn tất</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex flex-wrap justify-between items-center text-xs text-slate-500 pt-1">
+              <span>Đang hiển thị: <strong id="sheetRecordFilterCount" class="text-slate-800">0</strong> hồ sơ</span>
+              <div class="flex items-center gap-2">
+                <span id="sheetSyncNotice" class="text-[11px] text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+                  🟢 Đồng bộ với Google Sheet
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Records Table & Cards Container -->
+        <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <h4 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <span>📂</span> Danh Sách Chi Tiết Hồ Sơ Người Dùng Đã Gửi
+            </h4>
+            <div class="text-xs text-slate-400">
+              Bấm vào "Xem chi tiết" để xem toàn bộ phác đồ, ghi chú của Bác sĩ và mở Zalo trao đổi
+            </div>
+          </div>
+
+          <!-- Responsive Table View -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm border-collapse min-w-[760px]">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 font-extrabold uppercase text-[11px]">
+                  <th class="py-3 px-3">Mã phiếu</th>
+                  <th class="py-3 px-3">Thời gian</th>
+                  <th class="py-3 px-3">Bệnh nhân / SĐT</th>
+                  <th class="py-3 px-3">Chuyên mục tư vấn</th>
+                  <th class="py-3 px-3">Hình thức</th>
+                  <th class="py-3 px-3">Triệu chứng &amp; Ghi chú</th>
+                  <th class="py-3 px-3">Trạng thái</th>
+                  <th class="py-3 px-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="sheetRecordsTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamically populated via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div id="sheetRecordsEmptyState" class="hidden py-12 text-center space-y-3">
+            <div class="text-4xl">📭</div>
+            <h5 class="font-extrabold text-slate-700 text-sm">Chưa có hồ sơ nào phù hợp với bộ lọc</h5>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">
+              Khi người dùng gửi thông tin đặt lịch trên trang hoặc qua Google Sheet, danh sách sẽ tự động hiển thị đầy đủ tại đây.
+            </p>
+            <button type="button" onclick="navigateSection('consult')" class="px-4 py-2 rounded-xl text-xs font-bold text-white tea-gradient shadow">
+              ✍️ Điền thử đơn đặt lịch mẫu
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           CMS TAB 4: CLINIC & PROFILE CONFIGURATION
            ===================================================== -->
       <div id="cmsPane-siteinfo" class="hidden bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
         <div class="border-b border-slate-100 pb-4">
@@ -1503,6 +1645,45 @@ function doPost(e) {
 }
 
 function doGet(e) {
+  var action = (e.parameter && e.parameter.action) || 'read';
+  if (action === 'read' || action === 'getAll') {
+    try {
+      var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+      var data = sheet.getDataRange().getValues();
+      if (data.length <= 1) {
+        return ContentService.createTextOutput(JSON.stringify({
+          result: "success",
+          total: 0,
+          records: []
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      var records = [];
+      for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+        records.push({
+          createdAt: row[0] ? String(row[0]) : '',
+          id: row[1] ? String(row[1]) : '',
+          name: row[2] ? String(row[2]) : '',
+          phone: row[3] ? String(row[3]).replace(/^'/, '') : '',
+          specialty: row[4] ? String(row[4]) : '',
+          mode: row[5] ? String(row[5]) : '',
+          summary: row[6] ? String(row[6]) : '',
+          status: row[7] ? String(row[7]) : 'Chờ liên hệ',
+          source: row[8] ? String(row[8]) : 'Google Sheet'
+        });
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        result: "success",
+        total: records.length,
+        records: records
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+      return ContentService.createTextOutput(JSON.stringify({
+        result: "error",
+        error: err.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
   return ContentService.createTextOutput(JSON.stringify({
     status: "online",
     clinic: "You & Me Clinic - BS. Phạm Tấn Trà",
@@ -1586,6 +1767,120 @@ function doGet(e) {
             💬 Hỏi thêm BS. Trà về chủ đề này
           </button>
           <button type="button" onclick="closeArticleModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 text-slate-700">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATIENT CONSULTATION & BOOKING RECORD DETAIL MODAL -->
+  <div id="consultDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-5 sm:p-6 border-b border-slate-100 flex justify-between items-start gap-4 bg-slate-50">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="modalConsultSpecialtyBadge" class="text-xs font-extrabold px-3 py-1 rounded-full bg-teal-100 text-teal-900 border border-teal-200">
+              Chuyên mục
+            </span>
+            <span id="modalConsultSyncBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              🟢 Đã lưu Google Sheet
+            </span>
+          </div>
+          <h3 class="text-xl font-extrabold text-slate-900 mt-2 flex items-center gap-2">
+            <span>👨‍⚕️ Chi Tiết Hồ Sơ Bệnh Nhân:</span>
+            <span id="modalConsultName" class="text-teal-800 font-black">Nguyễn Thị Thanh Tâm</span>
+          </h3>
+          <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1">
+            <span>Mã phiếu: <strong id="modalConsultId" class="text-slate-800 font-mono">DRTEA-00000</strong></span>
+            <span>•</span>
+            <span>Thời gian gửi: <strong id="modalConsultTime" class="text-slate-700">18/10/2026, 20:30:00</strong></span>
+          </div>
+        </div>
+        <button type="button" onclick="closeConsultDetailModal()" class="w-9 h-9 rounded-full bg-white hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center border border-slate-200 shadow-sm">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+        <!-- Contact & Quick Actions Card -->
+        <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 flex flex-wrap justify-between items-center gap-3">
+          <div>
+            <span class="text-xs text-slate-500 font-medium">Số điện thoại / Zalo liên hệ:</span>
+            <div id="modalConsultPhone" class="text-base font-extrabold text-teal-950 font-mono">0383 926 649</div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <a id="modalConsultCallBtn" href="tel:0383926649" class="px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs flex items-center gap-1.5 shadow transition">
+              <span>📞</span> Gọi Điện Ngay
+            </a>
+            <a id="modalConsultZaloBtn" href="https://zalo.me/0383926649" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow transition">
+              <span>💬</span> Mở Chat Zalo
+            </a>
+            <button type="button" onclick="openChatWithPatientFromModal()" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-teal-800 border border-teal-300 font-bold text-xs flex items-center gap-1.5 transition">
+              <span>💬</span> Chat Trên Web
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode & Specialty Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-xs text-slate-400 font-semibold block">Chuyên mục cần tư vấn:</span>
+            <div id="modalConsultSpecialty" class="font-bold text-slate-900 mt-0.5">Tầm soát Ung bướu</div>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-xs text-slate-400 font-semibold block">Hình thức &amp; Khung giờ mong muốn:</span>
+            <div id="modalConsultMode" class="font-bold text-slate-900 mt-0.5">Tư vấn trực tuyến qua Video/Zalo</div>
+          </div>
+        </div>
+
+        <!-- Summary & Attached Phác Đồ -->
+        <div class="space-y-1.5">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+            📝 Triệu chứng, tiền sử &amp; Phác đồ tự sàng lọc bệnh nhân gửi kèm:
+          </span>
+          <div id="modalConsultSummary" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 whitespace-pre-wrap text-slate-800 text-xs sm:text-sm max-h-48 overflow-y-auto leading-relaxed"></div>
+        </div>
+
+        <!-- Doctor Processing Status & Clinical Notes -->
+        <div class="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-3">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <span class="text-xs font-extrabold text-amber-950 uppercase">
+              ⚙️ Cập Nhật Trạng Thái &amp; Ghi Chú Chuyên Môn Của Bác Sĩ
+            </span>
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-bold text-slate-600">Trạng thái:</label>
+              <select id="modalConsultStatusSelect" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-bold bg-white">
+                <option value="Chờ liên hệ">⏳ Chờ liên hệ</option>
+                <option value="Đang tư vấn">💬 Đang tư vấn</option>
+                <option value="Đã hoàn tất">✅ Đã hoàn tất</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <textarea id="modalConsultDoctorNote" rows="3" placeholder="Ghi chú lâm sàng của Bác sĩ (chẩn đoán sơ bộ, dặn dò xét nghiệm thêm, ngày hẹn tái khám... Ghi chú này chỉ lưu nội bộ Bác sĩ)..." class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs bg-white"></textarea>
+          </div>
+          <div class="flex justify-between items-center">
+            <span id="modalSaveNoteNotice" class="text-[11px] text-emerald-700 font-bold hidden">✅ Đã lưu ghi chú Bác sĩ thành công!</span>
+            <button type="button" onclick="saveModalDoctorNote()" class="ml-auto px-4 py-2 rounded-xl text-xs font-extrabold text-white tea-gradient shadow hover:opacity-95 transition">
+              💾 Lưu Trạng Thái &amp; Ghi Chú
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="syncCurrentModalRecordToSheet()" id="btnModalSyncSheet" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-50 transition flex items-center gap-1">
+            <span>🔄</span> Đồng bộ lại lên Google Sheet
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="window.print()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition">
+            🖨️ In phiếu tóm tắt
+          </button>
+          <button type="button" onclick="closeConsultDetailModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
             Đóng
           </button>
         </div>
@@ -2564,8 +2859,11 @@ function doGet(e) {
 
     function exportConsultCSV() {
       const list = getConsultRecords();
-      if (list.length === 0) return;
-      const headers = ['Ma_Phieu', 'Thoi_Gian', 'Ho_Ten', 'So_Dien_Thoai', 'Chuyen_Muc', 'Hinh_Thuc', 'Tom_Tat', 'Trang_Thai'];
+      if (list.length === 0) {
+        showCmsNotification('Chưa có hồ sơ nào để xuất file CSV!', 'info');
+        return;
+      }
+      const headers = ['Ma_Phieu', 'Thoi_Gian', 'Ho_Ten', 'So_Dien_Thoai', 'Chuyen_Muc', 'Hinh_Thuc', 'Tom_Tat', 'Trang_Thai', 'Ghi_Chu_Bac_Si'];
       const rows = list.map(r => [
         r.id,
         `"${r.createdAt}"`,
@@ -2574,15 +2872,339 @@ function doGet(e) {
         `"${r.specialty}"`,
         `"${r.mode}"`,
         `"${(r.summary || '').replace(/"/g, '""')}"`,
-        `"${r.status || 'Chờ liên hệ'}"`
+        `"${r.status || 'Chờ liên hệ'}"`,
+        `"${(r.doctorNote || '').replace(/"/g, '""')}"`
       ]);
       const csv = '\uFEFF' + [headers.join(','), ...rows.map(x => x.join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'danh_sach_tu_van_youandme_drteaclinic.csv';
+      a.download = `danh_sach_tu_van_youandme_${new Date().toISOString().slice(0,10)}.csv`;
       a.click();
+      showCmsNotification('Đã xuất thành công file danh sách hồ sơ (.CSV)!');
+    }
+
+    // =========================================================
+    // CMS TAB 3: GOOGLE SHEET PATIENT RECORDS MANAGER
+    // =========================================================
+    let currentConsultDetailId = null;
+
+    function renderSheetRecordsManager() {
+      const list = getConsultRecords();
+
+      // Update badge in tab header
+      const countEl = document.getElementById('cmsSheetRecordCount');
+      if (countEl) countEl.textContent = list.length;
+
+      // Update statistics counters
+      const pendingCount = list.filter(r => (r.status || 'Chờ liên hệ') === 'Chờ liên hệ').length;
+      const consultingCount = list.filter(r => r.status === 'Đang tư vấn').length;
+      const completedCount = list.filter(r => r.status === 'Đã hoàn tất').length;
+
+      const statTotal = document.getElementById('statSheetTotal');
+      const statPending = document.getElementById('statSheetPending');
+      const statConsulting = document.getElementById('statSheetConsulting');
+      const statCompleted = document.getElementById('statSheetCompleted');
+      if (statTotal) statTotal.textContent = list.length;
+      if (statPending) statPending.textContent = pendingCount;
+      if (statConsulting) statConsulting.textContent = consultingCount;
+      if (statCompleted) statCompleted.textContent = completedCount;
+
+      const newBookingBadge = document.getElementById('cmsNewBookingBadge');
+      if (newBookingBadge) {
+        if (pendingCount > 0) {
+          newBookingBadge.textContent = pendingCount + ' MỚI';
+          newBookingBadge.classList.remove('hidden');
+        } else {
+          newBookingBadge.classList.add('hidden');
+        }
+      }
+
+      applySheetRecordsFilter();
+    }
+
+    function applySheetRecordsFilter() {
+      const list = getConsultRecords();
+      const q = (document.getElementById('sheetSearchInput')?.value || '').toLowerCase().trim();
+      const specFilter = document.getElementById('sheetFilterSpecialty')?.value || 'all';
+      const statusFilter = document.getElementById('sheetFilterStatus')?.value || 'all';
+
+      const filtered = list.filter(r => {
+        // Search query filter
+        if (q) {
+          const matchId = (r.id || '').toLowerCase().includes(q);
+          const matchName = (r.name || '').toLowerCase().includes(q);
+          const matchPhone = (r.phone || '').toLowerCase().includes(q);
+          const matchSummary = (r.summary || '').toLowerCase().includes(q);
+          const matchSpec = (r.specialty || '').toLowerCase().includes(q);
+          if (!matchId && !matchName && !matchPhone && !matchSummary && !matchSpec) return false;
+        }
+
+        // Specialty filter
+        if (specFilter !== 'all') {
+          const s = (r.specialty || '').toLowerCase();
+          if (specFilter === 'oncology' && !s.includes('ung bướu') && !s.includes('vú') && !s.includes('gan')) return false;
+          if (specFilter === 'internal' && !s.includes('nội khoa') && !s.includes('huyết áp') && !s.includes('thận') && !s.includes('tiểu đường')) return false;
+          if (specFilter === 'lab' && !s.includes('xét nghiệm') && !s.includes('hình ảnh') && !s.includes('viêm gan')) return false;
+          if (specFilter === 'palliative' && !s.includes('giảm nhẹ') && !s.includes('dinh dưỡng')) return false;
+        }
+
+        // Status filter
+        if (statusFilter !== 'all') {
+          const st = r.status || 'Chờ liên hệ';
+          if (st !== statusFilter) return false;
+        }
+
+        return true;
+      });
+
+      const countDisplay = document.getElementById('sheetRecordFilterCount');
+      if (countDisplay) countDisplay.textContent = filtered.length;
+
+      const tbody = document.getElementById('sheetRecordsTableBody');
+      const emptyBox = document.getElementById('sheetRecordsEmptyState');
+
+      if (!tbody) return;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        if (emptyBox) emptyBox.classList.remove('hidden');
+        return;
+      }
+
+      if (emptyBox) emptyBox.classList.add('hidden');
+
+      tbody.innerHTML = filtered.map(r => {
+        const cleanPhone = (r.phone || '').replace(/\s+/g, '');
+        const currentStatus = r.status || 'Chờ liên hệ';
+
+        let statusClass = 'bg-amber-100 text-amber-900 border-amber-300';
+        if (currentStatus === 'Đang tư vấn') statusClass = 'bg-sky-100 text-sky-900 border-sky-300';
+        if (currentStatus === 'Đã hoàn tất') statusClass = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+
+        return `
+          <tr class="hover:bg-teal-50/40 transition">
+            <td class="py-3 px-3 align-top font-mono font-bold text-teal-900 text-xs">${r.id}</td>
+            <td class="py-3 px-3 align-top text-slate-500 text-xs whitespace-nowrap">${r.createdAt}</td>
+            <td class="py-3 px-3 align-top">
+              <div class="font-bold text-slate-900">${r.name}</div>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <a href="tel:${cleanPhone}" class="text-xs font-mono font-bold text-teal-800 hover:underline">📞 ${r.phone}</a>
+                <a href="https://zalo.me/${cleanPhone}" target="_blank" rel="noopener noreferrer" class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold hover:bg-blue-100" title="Nhắn Zalo">Zalo</a>
+              </div>
+            </td>
+            <td class="py-3 px-3 align-top">
+              <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200 block max-w-[210px] leading-tight">
+                ${r.specialty}
+              </span>
+            </td>
+            <td class="py-3 px-3 align-top text-slate-600 text-xs max-w-[140px] leading-snug">${r.mode || 'Trực tuyến'}</td>
+            <td class="py-3 px-3 align-top">
+              <div class="text-slate-600 text-xs max-w-[200px] line-clamp-2 leading-relaxed" title="${r.summary}">
+                ${r.summary}
+              </div>
+            </td>
+            <td class="py-3 px-3 align-top whitespace-nowrap">
+              <select onchange="updateConsultRecordStatus('${r.id}', this.value)" class="text-xs font-bold rounded-lg border px-2 py-1 cursor-pointer ${statusClass}">
+                <option value="Chờ liên hệ" ${currentStatus === 'Chờ liên hệ' ? 'selected' : ''}>⏳ Chờ liên hệ</option>
+                <option value="Đang tư vấn" ${currentStatus === 'Đang tư vấn' ? 'selected' : ''}>💬 Đang tư vấn</option>
+                <option value="Đã hoàn tất" ${currentStatus === 'Đã hoàn tất' ? 'selected' : ''}>✅ Đã hoàn tất</option>
+              </select>
+            </td>
+            <td class="py-3 px-3 align-top text-right whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1.5">
+                <button type="button" onclick="openConsultDetailModal('${r.id}')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-sm flex items-center gap-1 transition" title="Xem đầy đủ hồ sơ bệnh nhân">
+                  <span>👁️</span> Xem
+                </button>
+                <button type="button" onclick="syncSingleConsultToSheet('${r.id}')" class="px-2 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition" title="Đồng bộ lại lên Google Sheet">
+                  <span>🔄</span>
+                </button>
+                <button type="button" onclick="deleteConsultRecord('${r.id}')" class="px-2 py-1.5 rounded-lg text-xs font-bold bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition" title="Xóa hồ sơ">
+                  <span>🗑️</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openConsultDetailModal(id) {
+      const list = getConsultRecords();
+      const r = list.find(x => x.id === id);
+      if (!r) return;
+
+      currentConsultDetailId = id;
+      const cleanPhone = (r.phone || '').replace(/\s+/g, '');
+
+      document.getElementById('modalConsultId').textContent = r.id;
+      document.getElementById('modalConsultTime').textContent = r.createdAt;
+      document.getElementById('modalConsultName').textContent = r.name;
+      document.getElementById('modalConsultPhone').textContent = r.phone;
+      document.getElementById('modalConsultSpecialty').textContent = r.specialty;
+      document.getElementById('modalConsultSpecialtyBadge').textContent = r.specialty;
+      document.getElementById('modalConsultMode').textContent = r.mode || 'Trực tuyến qua Video / Zalo';
+      document.getElementById('modalConsultSummary').textContent = r.summary || '(Không có ghi chú thêm)';
+
+      document.getElementById('modalConsultCallBtn').href = 'tel:' + cleanPhone;
+      document.getElementById('modalConsultZaloBtn').href = 'https://zalo.me/' + cleanPhone;
+
+      const statusSelect = document.getElementById('modalConsultStatusSelect');
+      if (statusSelect) statusSelect.value = r.status || 'Chờ liên hệ';
+
+      const doctorNoteEl = document.getElementById('modalConsultDoctorNote');
+      if (doctorNoteEl) doctorNoteEl.value = r.doctorNote || '';
+
+      const syncBadge = document.getElementById('modalConsultSyncBadge');
+      if (syncBadge) {
+        if (r.syncedToSheet) {
+          syncBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+          syncBadge.textContent = '🟢 Đã lưu Google Sheet';
+        } else {
+          syncBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800';
+          syncBadge.textContent = '⚪ Lưu bộ nhớ cục bộ';
+        }
+      }
+
+      const notice = document.getElementById('modalSaveNoteNotice');
+      if (notice) notice.classList.add('hidden');
+
+      document.getElementById('consultDetailModal').classList.remove('hidden');
+    }
+
+    function closeConsultDetailModal() {
+      const modal = document.getElementById('consultDetailModal');
+      if (modal) modal.classList.add('hidden');
+      currentConsultDetailId = null;
+    }
+
+    function updateConsultRecordStatus(id, newStatus) {
+      const list = getConsultRecords();
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+
+      item.status = newStatus;
+      saveConsultRecords(list);
+      renderSheetRecordsManager();
+      showCmsNotification(`Đã cập nhật trạng thái hồ sơ ${id} thành: "${newStatus}"!`);
+    }
+
+    function saveModalDoctorNote() {
+      if (!currentConsultDetailId) return;
+      const list = getConsultRecords();
+      const item = list.find(x => x.id === currentConsultDetailId);
+      if (!item) return;
+
+      const newStatus = document.getElementById('modalConsultStatusSelect')?.value || item.status;
+      const docNote = document.getElementById('modalConsultDoctorNote')?.value.trim() || '';
+
+      item.status = newStatus;
+      item.doctorNote = docNote;
+      saveConsultRecords(list);
+      renderSheetRecordsManager();
+
+      const notice = document.getElementById('modalSaveNoteNotice');
+      if (notice) {
+        notice.classList.remove('hidden');
+        setTimeout(() => notice.classList.add('hidden'), 3500);
+      }
+      showCmsNotification(`Đã lưu ghi chú Bác sĩ cho hồ sơ ${currentConsultDetailId}!`);
+    }
+
+    function deleteConsultRecord(id) {
+      if (!confirm(`Bạn có chắc chắn muốn xóa hồ sơ đặt lịch ${id} khỏi danh sách không?`)) return;
+      let list = getConsultRecords();
+      list = list.filter(x => x.id !== id);
+      saveConsultRecords(list);
+      renderSheetRecordsManager();
+      showCmsNotification(`Đã xóa hồ sơ ${id} thành công!`);
+    }
+
+    function openChatWithPatientFromModal() {
+      if (!currentConsultDetailId) return;
+      const list = getConsultRecords();
+      const item = list.find(x => x.id === currentConsultDetailId);
+      closeConsultDetailModal();
+      toggleFloatingChat(true);
+
+      if (item) {
+        const nameInput = document.getElementById('chatPatientName');
+        const phoneInput = document.getElementById('chatPatientPhone');
+        if (nameInput && !nameInput.value) nameInput.value = item.name;
+        if (phoneInput && !phoneInput.value) phoneInput.value = item.phone;
+      }
+    }
+
+    async function syncCurrentModalRecordToSheet() {
+      if (!currentConsultDetailId) return;
+      await syncSingleConsultToSheet(currentConsultDetailId);
+      const syncBadge = document.getElementById('modalConsultSyncBadge');
+      if (syncBadge) {
+        syncBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+        syncBadge.textContent = '🟢 Đã lưu Google Sheet';
+      }
+    }
+
+    function openDirectGoogleSheet() {
+      if (SITE_CONFIG.googleSheetDocUrl && SITE_CONFIG.googleSheetDocUrl.trim()) {
+        window.open(SITE_CONFIG.googleSheetDocUrl.trim(), '_blank');
+      } else {
+        window.open('https://docs.google.com/spreadsheets', '_blank');
+      }
+    }
+
+    async function refreshGoogleSheetRecords() {
+      const btn = document.getElementById('btnRefreshSheetRecords');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Đang tải từ Google Sheet...';
+      }
+
+      if (SITE_CONFIG.googleSheetUrl && SITE_CONFIG.googleSheetUrl.trim()) {
+        try {
+          const fetchUrl = SITE_CONFIG.googleSheetUrl.trim() + (SITE_CONFIG.googleSheetUrl.includes('?') ? '&' : '?') + 'action=read';
+          const resp = await fetch(fetchUrl);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.result === 'success' && Array.isArray(data.records) && data.records.length > 0) {
+              const currentList = getConsultRecords();
+              let newCount = 0;
+
+              data.records.forEach(sheetRec => {
+                const exists = currentList.find(x => x.id === sheetRec.id || (x.phone === sheetRec.phone && x.createdAt === sheetRec.createdAt));
+                if (!exists) {
+                  currentList.unshift({
+                    id: sheetRec.id || ('DRTEA-' + Math.floor(10000 + Math.random() * 90000)),
+                    createdAt: sheetRec.createdAt,
+                    name: sheetRec.name,
+                    phone: sheetRec.phone,
+                    specialty: sheetRec.specialty,
+                    mode: sheetRec.mode,
+                    summary: sheetRec.summary,
+                    status: sheetRec.status || 'Chờ liên hệ',
+                    syncedToSheet: true
+                  });
+                  newCount++;
+                } else {
+                  exists.syncedToSheet = true;
+                }
+              });
+
+              saveConsultRecords(currentList);
+              showCmsNotification(`Đã đồng bộ thành công! Tìm thấy ${data.records.length} hồ sơ trên Google Sheet (${newCount} hồ sơ mới).`);
+            }
+          }
+        } catch (err) {
+          console.warn('Không thể đọc trực tiếp qua GET Web App, sử dụng dữ liệu đã đồng bộ:', err);
+        }
+      }
+
+      renderSheetRecordsManager();
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔄</span> Tải Lại Từ Google Sheet';
+      }
     }
 
     // =========================================================
@@ -2638,6 +3260,7 @@ function doGet(e) {
 
       applySiteConfigToDOM();
       populateSiteConfigForm();
+      renderSheetRecordsManager();
     }
 
     function saveArticlesToStorage() {
@@ -2658,13 +3281,14 @@ function doGet(e) {
     }
 
     function switchCmsTab(tabName) {
-      ['articles', 'chatinbox', 'siteinfo', 'googlesheet', 'backup'].forEach(t => {
+      ['articles', 'chatinbox', 'sheetrecords', 'siteinfo', 'googlesheet', 'backup'].forEach(t => {
         const pane = document.getElementById('cmsPane-' + t);
         const btn = document.getElementById('cmsTabBtn-' + t);
         if (pane) pane.classList.toggle('hidden', t !== tabName);
         if (btn) btn.classList.toggle('tab-active', t === tabName);
       });
       if (tabName === 'chatinbox') { renderChatEverywhere(); }
+      if (tabName === 'sheetrecords') { renderSheetRecordsManager(); }
       if (tabName === 'googlesheet') {
         const el = document.getElementById('cfgGoogleSheetUrl');
         if (el && SITE_CONFIG.googleSheetUrl !== undefined) el.value = SITE_CONFIG.googleSheetUrl;

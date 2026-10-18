@@ -1,0 +1,8 @@
+{
+  "port": 3000,
+  "googleSheetWebAppUrl": "https://script.google.com/macros/s/AKfycbx_REPLACE_WITH_YOUR_ACTUAL_SCRIPT_ID/exec",
+  "adminUsername": "admin",
+  "adminPassword": "drtea2026",
+  "clinicName": "You & Me - Phòng khám BS. Phạm Tấn Trà",
+  "corsOrigin": "*"
+}
