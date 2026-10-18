@@ -1107,8 +1107,11 @@
         <button type="button" id="cmsTabBtn-siteinfo" onclick="switchCmsTab('siteinfo')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition">
           🏥 3. Sửa SĐT, STK Ngân hàng &amp; Thông tin Web
         </button>
+        <button type="button" id="cmsTabBtn-googlesheet" onclick="switchCmsTab('googlesheet')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition flex items-center gap-1.5">
+          📊 4. Tích hợp Google Sheets
+        </button>
         <button type="button" id="cmsTabBtn-backup" onclick="switchCmsTab('backup')" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition">
-          💾 4. Sao lưu &amp; Xuất bản File index.html
+          💾 5. Sao lưu &amp; Xuất bản File index.html
         </button>
       </div>
 
@@ -1321,7 +1324,197 @@
       </div>
 
       <!-- =====================================================
-           CMS TAB 3: EXPORT HTML, JSON BACKUP & RESTORE
+           CMS TAB 4: GOOGLE SHEETS LIVE INTEGRATION & APPS SCRIPT
+           ===================================================== -->
+      <div id="cmsPane-googlesheet" class="hidden space-y-6">
+        <!-- Status & Endpoint Config Card -->
+        <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-5">
+          <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-extrabold uppercase">
+                <span>📊</span> Tự Động Lưu Dữ Liệu Tư Vấn &amp; Đặt Lịch Lên Google Sheet
+              </div>
+              <h3 class="text-xl font-extrabold text-slate-900 mt-2">
+                Cấu Hình Google Sheets Web App Endpoint
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                Mỗi khi người bệnh điền Form Tư vấn hoặc gửi hồ sơ, dữ liệu sẽ được tự động đồng bộ ngay lập tức thành 1 dòng mới trên Google Trang tính của bạn.
+              </p>
+            </div>
+            <div id="cmsGoogleSheetStatusBadge" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+              <span>Chưa kết nối Web App</span>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Google Sheets Web App URL (URL Triển khai Web App): <span class="text-red-500">*</span>
+              </label>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input type="url" id="cfgGoogleSheetUrl" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs sm:text-sm font-mono" />
+                <button type="button" onclick="saveGoogleSheetConfig()" class="px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm text-white tea-gradient shadow hover:opacity-95 transition whitespace-nowrap">
+                  💾 Lưu Cấu Hình
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">
+                Ví dụ: <code>https://script.google.com/macros/s/AKfycby..._abc123/exec</code> (Nhận được sau khi bấm <em>Triển khai ứng dụng web</em> từ Google Apps Script).
+              </p>
+            </div>
+
+            <!-- Action buttons: Test connection, View live data -->
+            <div class="flex flex-wrap gap-2.5 pt-1">
+              <button type="button" id="btnTestGoogleSheet" onclick="testGoogleSheetConnection()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition flex items-center gap-1.5">
+                <span>🧪</span> Gửi Dữ Liệu Thử Nghiệm (Test Record)
+              </button>
+              <button type="button" onclick="copyGoogleAppsScriptCode()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-teal-50 text-teal-800 border border-teal-300 hover:bg-teal-100 transition flex items-center gap-1.5">
+                <span>📋</span> Sao Chép Mã Google Apps Script Mẫu
+              </button>
+              <button type="button" onclick="syncAllLocalConsultsToGoogleSheet()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-1.5">
+                <span>🔄</span> Đồng bộ lại toàn bộ đơn đặt lịch cũ lên Sheet
+              </button>
+            </div>
+            <div id="googleSheetTestResult" class="hidden p-3.5 rounded-2xl text-xs"></div>
+          </div>
+        </div>
+
+        <!-- Guide & Code Snippet Card -->
+        <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h4 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <span>📘</span> Hướng Dẫn Thiết Lập Google Sheet Tự Động Trong 4 Bước
+              </h4>
+              <p class="text-xs text-slate-500">Hoàn toàn miễn phí, an toàn tuyệt đối và sở hữu 100% dữ liệu trên chính Google Drive của Bác sĩ.</p>
+            </div>
+            <button type="button" onclick="copyGoogleAppsScriptCode()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300">
+              📋 Sao chép mã
+            </button>
+          </div>
+
+          <!-- 4 Steps Visual -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-100 space-y-1.5">
+              <span class="w-6 h-6 rounded-full bg-teal-700 text-white font-extrabold flex items-center justify-center text-[11px]">1</span>
+              <h5 class="font-bold text-teal-950">Tạo Trang tính mới</h5>
+              <p class="text-slate-600">Vào <a href="https://sheets.new" target="_blank" class="text-teal-700 font-bold underline">sheets.new</a> để mở 1 Google Sheet trống (đặt tên: <em>Hồ Sơ Tư Vấn - Dr. Tea Clinic</em>).</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-100 space-y-1.5">
+              <span class="w-6 h-6 rounded-full bg-teal-700 text-white font-extrabold flex items-center justify-center text-[11px]">2</span>
+              <h5 class="font-bold text-teal-950">Mở Apps Script</h5>
+              <p class="text-slate-600">Trên menu Google Sheet, chọn <strong>Tiện ích mở rộng (Extensions)</strong> &gt; <strong>Apps Script</strong>.</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-100 space-y-1.5">
+              <span class="w-6 h-6 rounded-full bg-teal-700 text-white font-extrabold flex items-center justify-center text-[11px]">3</span>
+              <h5 class="font-bold text-teal-950">Dán mã &amp; Lưu</h5>
+              <p class="text-slate-600">Xóa đoạn code mặc định, bấm nút <em>"Sao Chép Mã"</em> bên dưới dán vào rồi bấm <strong>Lưu (Ctrl+S)</strong>.</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-100 space-y-1.5">
+              <span class="w-6 h-6 rounded-full bg-teal-700 text-white font-extrabold flex items-center justify-center text-[11px]">4</span>
+              <h5 class="font-bold text-teal-950">Triển khai Web App</h5>
+              <p class="text-slate-600">Bấm <strong>Deploy &gt; New deployment &gt; Web app</strong>. Mục <em>Who has access</em> chọn <strong>Anyone</strong>. Sao chép URL dán vào ô bên trên!</p>
+            </div>
+          </div>
+
+          <!-- Code Snippet Display -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-xs text-slate-500 font-medium">
+              <span>Đoạn mã Google Apps Script hoàn chỉnh (Tự động tạo cột tiêu đề &amp; định dạng màu):</span>
+              <span id="copyAppsScriptFeedback" class="text-emerald-700 font-bold hidden">✅ Đã sao chép vào bộ nhớ tạm!</span>
+            </div>
+            <pre class="bg-slate-900 text-slate-100 p-4 rounded-2xl text-xs font-mono overflow-x-auto max-h-72 leading-relaxed border border-slate-800" id="googleAppsScriptCodeBlock"><code>/**
+ * GOOGLE APPS SCRIPT CHO YOU &amp; ME CLINIC (BS. PHẠM TẤN TRÀ)
+ * Tự động ghi nhận thông tin Tư vấn &amp; Đặt lịch từ youandme.drteaclinic.vn
+ */
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // Tự tạo hàng tiêu đề nếu bảng còn trống
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        "Thời gian gửi",
+        "Mã phiếu",
+        "Họ và tên",
+        "Số điện thoại / Zalo",
+        "Chuyên mục tư vấn",
+        "Hình thức & Khung giờ",
+        "Triệu chứng / Phác đồ đính kèm",
+        "Trạng thái",
+        "Nguồn gửi"
+      ]);
+      var headerRange = sheet.getRange(1, 1, 1, 9);
+      headerRange.setBackground("#0d9488");
+      headerRange.setFontColor("#ffffff");
+      headerRange.setFontWeight("bold");
+      sheet.setFrozenRows(1);
+    }
+    
+    var data;
+    if (e.postData && e.postData.contents) {
+      try {
+        data = JSON.parse(e.postData.contents);
+      } catch (err) {
+        data = e.parameter;
+      }
+    } else {
+      data = e.parameter;
+    }
+    
+    var timestamp = data.createdAt || new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+    var id = data.id || "DRTEA-" + Math.floor(10000 + Math.random() * 90000);
+    var name = data.name || "";
+    var phone = data.phone || "";
+    var specialty = data.specialty || "";
+    var mode = data.mode || "";
+    var summary = data.summary || "";
+    var status = data.status || "Chờ liên hệ";
+    var source = data.source || "Website youandme.drteaclinic.vn";
+    
+    sheet.appendRow([
+      timestamp,
+      id,
+      name,
+      "'" + phone, // Giữ số 0 đầu điện thoại
+      specialty,
+      mode,
+      summary,
+      status,
+      source
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      result: "success",
+      id: id,
+      message: "Đã lưu vào Google Sheet thành công!"
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      result: "error",
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    status: "online",
+    clinic: "You & Me Clinic - BS. Phạm Tấn Trà",
+    service: "Google Sheets Webhook Active"
+  })).setMimeType(ContentService.MimeType.JSON);
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           CMS TAB 5: EXPORT HTML, JSON BACKUP & RESTORE
            ===================================================== -->
       <div id="cmsPane-backup" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
@@ -2214,8 +2407,48 @@
       renderConsultQueue();
     }
 
-    function submitConsultForm(e) {
+    // Send single consult record to Google Sheets via Web App (mode: no-cors)
+    async function sendRecordToGoogleSheet(rec) {
+      if (!SITE_CONFIG.googleSheetUrl || !SITE_CONFIG.googleSheetUrl.trim()) {
+        return { success: false, reason: 'no_url' };
+      }
+      try {
+        const payload = JSON.stringify({
+          id: rec.id,
+          createdAt: rec.createdAt,
+          name: rec.name,
+          phone: rec.phone,
+          specialty: rec.specialty,
+          mode: rec.mode,
+          summary: rec.summary,
+          status: rec.status || 'Chờ liên hệ',
+          source: 'Website youandme.drteaclinic.vn'
+        });
+
+        await fetch(SITE_CONFIG.googleSheetUrl.trim(), {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: payload
+        });
+        return { success: true };
+      } catch (err) {
+        console.error('Lỗi khi gửi Google Sheet:', err);
+        return { success: false, error: err };
+      }
+    }
+
+    async function submitConsultForm(e) {
       e.preventDefault();
+      const submitBtn = document.getElementById('consultSubmitBtn');
+      const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="animate-spin inline-block mr-1">🔄</span> Đang lưu vào Google Sheet & gửi BS. Trà...';
+      }
+
       const name = document.getElementById('consultName').value.trim();
       const phone = document.getElementById('consultPhone').value.trim();
       const specialty = document.getElementById('consultSpecialty').value;
@@ -2229,20 +2462,55 @@
         phone,
         specialty,
         mode,
-        summary: summary || 'Đăng ký tư vấn trực tiếp cùng BS. Phạm Tấn Trà'
+        summary: summary || 'Đăng ký tư vấn trực tiếp cùng BS. Phạm Tấn Trà',
+        status: 'Chờ liên hệ',
+        syncedToSheet: false
       };
 
+      // 1. Send to Google Sheets if Web App URL is configured
+      let sheetStatusMsg = '';
+      if (SITE_CONFIG.googleSheetUrl && SITE_CONFIG.googleSheetUrl.trim()) {
+        const sheetRes = await sendRecordToGoogleSheet(rec);
+        if (sheetRes.success) {
+          rec.syncedToSheet = true;
+          sheetStatusMsg = '<span class="text-emerald-700 font-bold">✅ Đã tự động lưu vào Google Sheet của phòng khám.</span>';
+        } else {
+          sheetStatusMsg = '<span class="text-amber-700">⚠️ Đang lưu trên bộ nhớ web (kết nối Sheet đang xử lý).</span>';
+        }
+      } else {
+        sheetStatusMsg = '<span class="text-slate-500">ℹ️ Đã lưu vào Hộp thư Bác sĩ trên web (Bác sĩ có thể nhập Google Sheet Web App URL trong mục CMS để tự động ghi vào bảng tính).</span>';
+      }
+
+      // 2. Save locally so it appears in live queue
       const list = getConsultRecords();
       list.unshift(rec);
       saveConsultRecords(list);
 
+      // 3. Update confirmation banner
       const confirmBox = document.getElementById('consultConfirmationBox');
       confirmBox.classList.remove('hidden');
       confirmBox.innerHTML = `
-        <strong>🎉 Đã gửi hồ sơ thành công đến BS. Phạm Tấn Trà (Mã phiếu: ${rec.id})!</strong><br/>
-        Cảm ơn bạn <strong>${name}</strong> (${phone}). Yêu cầu tư vấn thuộc chuyên mục <em>"${specialty}"</em> đã được lưu vào hộp thư của <strong>youandme.drteaclinic.vn</strong>. BS. Trà sẽ phản hồi cho bạn trong thời gian sớm nhất.
+        <div class="space-y-2">
+          <div class="flex items-center gap-2 text-teal-950 font-extrabold text-sm sm:text-base">
+            <span>🎉</span> Đã gửi hồ sơ đặt lịch thành công đến BS. Phạm Tấn Trà!
+          </div>
+          <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">
+            Cảm ơn bạn <strong>${name}</strong> (SĐT/Zalo: <strong>${phone}</strong>). Yêu cầu tư vấn chuyên mục <em>"${specialty}"</em> đã được tiếp nhận (Mã phiếu: <strong>${rec.id}</strong>).
+          </p>
+          <div class="p-3 bg-white rounded-xl border border-teal-200 text-xs flex flex-wrap items-center justify-between gap-2">
+            <div>📊 <strong>Trạng thái lưu trữ:</strong> ${sheetStatusMsg}</div>
+            <a href="https://zalo.me/0383926649" target="_blank" class="text-teal-700 font-bold hover:underline flex items-center gap-1">
+              <span>💬</span> Nhắn Zalo BS. Trà: 0383 926 649 →
+            </a>
+          </div>
+        </div>
       `;
+
       document.getElementById('drTeaConsultForm').reset();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
     }
 
     function renderConsultQueue() {
@@ -2258,21 +2526,46 @@
       }
 
       container.innerHTML = list.map(item => `
-        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
           <div class="flex justify-between items-center">
             <strong class="text-teal-900">${item.name} (${item.phone})</strong>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${item.syncedToSheet ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}">
+              ${item.syncedToSheet ? '🟢 Đã lưu Sheet' : '⚪ Lưu cục bộ'}
+            </span>
+          </div>
+          <div class="font-semibold text-slate-700 flex justify-between items-center">
+            <span>${item.specialty}</span>
             <span class="text-[11px] text-slate-400">${item.id}</span>
           </div>
-          <div class="font-semibold text-slate-700">${item.specialty}</div>
           <div class="text-slate-500 line-clamp-2">${item.summary}</div>
+          <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-200">
+            <span>⏰ ${item.createdAt}</span>
+            <button type="button" onclick="syncSingleConsultToSheet('${item.id}')" class="text-teal-700 font-bold hover:underline">
+              🔄 Gửi lại Sheet
+            </button>
+          </div>
         </div>
       `).join('');
+    }
+
+    async function syncSingleConsultToSheet(id) {
+      if (!SITE_CONFIG.googleSheetUrl || !SITE_CONFIG.googleSheetUrl.trim()) {
+        alert('Vui lòng cài đặt và Lưu URL Google Sheet trong mục CMS (Tab 4) trước.');
+        return;
+      }
+      const list = getConsultRecords();
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+      await sendRecordToGoogleSheet(item);
+      item.syncedToSheet = true;
+      saveConsultRecords(list);
+      showCmsNotification(`Đã đồng bộ đơn ${id} lên Google Sheet!`);
     }
 
     function exportConsultCSV() {
       const list = getConsultRecords();
       if (list.length === 0) return;
-      const headers = ['Ma_Phieu', 'Thoi_Gian', 'Ho_Ten', 'So_Dien_Thoai', 'Chuyen_Muc', 'Hinh_Thuc', 'Tom_Tat'];
+      const headers = ['Ma_Phieu', 'Thoi_Gian', 'Ho_Ten', 'So_Dien_Thoai', 'Chuyen_Muc', 'Hinh_Thuc', 'Tom_Tat', 'Trang_Thai'];
       const rows = list.map(r => [
         r.id,
         `"${r.createdAt}"`,
@@ -2280,7 +2573,8 @@
         `"${r.phone}"`,
         `"${r.specialty}"`,
         `"${r.mode}"`,
-        `"${(r.summary || '').replace(/"/g, '""')}"`
+        `"${(r.summary || '').replace(/"/g, '""')}"`,
+        `"${r.status || 'Chờ liên hệ'}"`
       ]);
       const csv = '\uFEFF' + [headers.join(','), ...rows.map(x => x.join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -2291,7 +2585,6 @@
       a.click();
     }
 
-    
     // =========================================================
     // CMS STUDIO: ARTICLES, SITE CONFIG, INLINE EDIT & HTML EXPORT
     // =========================================================
@@ -2303,7 +2596,8 @@
       docCchn: '009120/QNA-CCHN',
       docAddress: 'Tư vấn Y khoa Trực tuyến Toàn quốc 1:1 & Khám tại TP. Hồ Chí Minh',
       announcement: 'youandme.drteaclinic.vn — Phòng Khám & Tư Vấn Y Khoa Trực Tuyến 1:1 cùng BS. Phạm Tấn Trà (Nội khoa & Ung bướu)',
-      heroDesc: 'Chào mừng bạn đến với You & Me (youandme.drteaclinic.vn) — nền tảng Tư vấn Y khoa Trực tuyến (Telemedicine) chuyên sâu Nội khoa & Ung bướu của BS. Phạm Tấn Trà (Dr. Tea). Bạn có thể tự sàng lọc nguy cơ, tải trực tiếp hình ảnh xét nghiệm, đơn thuốc, file Word, Excel, PDF vào Chat Box để được bác sĩ phân tích và định hướng điều trị an toàn ngay tại nhà.'
+      heroDesc: 'Chào mừng bạn đến với You & Me (youandme.drteaclinic.vn) — nền tảng Tư vấn Y khoa Trực tuyến (Telemedicine) chuyên sâu Nội khoa & Ung bướu của BS. Phạm Tấn Trà (Dr. Tea). Bạn có thể tự sàng lọc nguy cơ, tải trực tiếp hình ảnh xét nghiệm, đơn thuốc, file Word, Excel, PDF vào Chat Box để được bác sĩ phân tích và định hướng điều trị an toàn ngay tại nhà.',
+      googleSheetUrl: ''
     };
 
     let MEDICAL_ARTICLES = [];
@@ -2364,14 +2658,17 @@
     }
 
     function switchCmsTab(tabName) {
-      ['articles', 'chatinbox', 'siteinfo', 'backup'].forEach(t => {
+      ['articles', 'chatinbox', 'siteinfo', 'googlesheet', 'backup'].forEach(t => {
         const pane = document.getElementById('cmsPane-' + t);
         const btn = document.getElementById('cmsTabBtn-' + t);
         if (pane) pane.classList.toggle('hidden', t !== tabName);
         if (btn) btn.classList.toggle('tab-active', t === tabName);
       });
       if (tabName === 'chatinbox') { renderChatEverywhere(); }
-      if (tabName === 'chatinbox') { renderChatEverywhere(); }
+      if (tabName === 'googlesheet') {
+        const el = document.getElementById('cfgGoogleSheetUrl');
+        if (el && SITE_CONFIG.googleSheetUrl !== undefined) el.value = SITE_CONFIG.googleSheetUrl;
+      }
     }
 
     function formatPlainOrHtmlContent(rawText) {
@@ -2574,6 +2871,7 @@
       setVal('cfgDocAddress', SITE_CONFIG.docAddress);
       setVal('cfgAnnouncement', SITE_CONFIG.announcement);
       setVal('cfgHeroDesc', SITE_CONFIG.heroDesc);
+      setVal('cfgGoogleSheetUrl', SITE_CONFIG.googleSheetUrl || '');
     }
 
     function applySiteConfigToDOM() {
@@ -2610,6 +2908,29 @@
         emailEl2.href = 'mailto:' + SITE_CONFIG.docEmail;
         emailEl2.textContent = SITE_CONFIG.docEmail;
       }
+
+      // Update Google Sheet badges in Consult Form and CMS
+      const sheetBadge = document.getElementById('googleSheetSyncBadge');
+      const cmsSheetStatus = document.getElementById('cmsGoogleSheetStatusBadge');
+      if (SITE_CONFIG.googleSheetUrl && SITE_CONFIG.googleSheetUrl.trim()) {
+        if (sheetBadge) {
+          sheetBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200';
+          sheetBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>🟢 Đã kết nối Google Sheet lưu dữ liệu tự động</span>';
+        }
+        if (cmsSheetStatus) {
+          cmsSheetStatus.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300';
+          cmsSheetStatus.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span><span>🟢 Web App Đang Hoạt Động</span>';
+        }
+      } else {
+        if (sheetBadge) {
+          sheetBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200';
+          sheetBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-400"></span><span>📊 Hỗ trợ lưu trữ &amp; đồng bộ Google Sheet</span>';
+        }
+        if (cmsSheetStatus) {
+          cmsSheetStatus.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300';
+          cmsSheetStatus.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>⚠️ Chưa cấu hình Web App URL</span>';
+        }
+      }
     }
 
     function saveSiteConfigForm(e) {
@@ -2622,13 +2943,122 @@
         docCchn: document.getElementById('cfgDocCchn').value.trim(),
         docAddress: document.getElementById('cfgDocAddress').value.trim(),
         announcement: document.getElementById('cfgAnnouncement').value.trim(),
-        heroDesc: document.getElementById('cfgHeroDesc').value.trim()
+        heroDesc: document.getElementById('cfgHeroDesc').value.trim(),
+        googleSheetUrl: (document.getElementById('cfgGoogleSheetUrl') ? document.getElementById('cfgGoogleSheetUrl').value.trim() : (SITE_CONFIG.googleSheetUrl || ''))
       };
       try {
         localStorage.setItem(SITE_CONFIG_STORAGE_KEY, JSON.stringify(SITE_CONFIG));
       } catch (e) {}
       applySiteConfigToDOM();
       showCmsNotification('Đã cập nhật SĐT, STK Ngân hàng và thông tin tư vấn trực tuyến trên toàn bộ giao diện web!');
+    }
+
+    // Google Sheets Dedicated Settings & Test Handlers
+    function saveGoogleSheetConfig() {
+      const urlInput = document.getElementById('cfgGoogleSheetUrl');
+      const url = urlInput ? urlInput.value.trim() : '';
+      SITE_CONFIG.googleSheetUrl = url;
+      try {
+        localStorage.setItem(SITE_CONFIG_STORAGE_KEY, JSON.stringify(SITE_CONFIG));
+      } catch (e) {}
+      applySiteConfigToDOM();
+      showCmsNotification('Đã lưu cấu hình Google Sheets URL thành công!');
+    }
+
+    async function testGoogleSheetConnection() {
+      const btn = document.getElementById('btnTestGoogleSheet');
+      const resBox = document.getElementById('googleSheetTestResult');
+      const url = (document.getElementById('cfgGoogleSheetUrl')?.value || SITE_CONFIG.googleSheetUrl || '').trim();
+
+      if (!url) {
+        alert('Vui lòng dán Google Sheets Web App URL vào ô trước khi bấm gửi thử!');
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Đang gửi bản ghi thử nghiệm...';
+      }
+      if (resBox) resBox.classList.add('hidden');
+
+      const testRec = {
+        id: 'TEST-' + Math.floor(1000 + Math.random() * 9000),
+        createdAt: new Date().toLocaleString('vi-VN'),
+        name: 'Bệnh nhân Thử nghiệm (Mẫu Test)',
+        phone: '0383926649',
+        specialty: '🎗️ Tầm soát & Tư vấn Ung bướu (Test)',
+        mode: 'Kiểm tra kết nối hệ thống tự động',
+        summary: 'Bản ghi gửi thử từ CMS Studio của You & Me Clinic (BS. Phạm Tấn Trà). Kết nối Google Sheet thành công 100%!',
+        status: 'Mẫu thử nghiệm',
+        source: 'CMS Test Tool'
+      };
+
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testRec)
+        });
+
+        if (resBox) {
+          resBox.className = 'p-3.5 rounded-2xl text-xs bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1';
+          resBox.innerHTML = `
+            <strong>🎉 Gửi dữ liệu thử nghiệm thành công lên Google Sheet!</strong><br/>
+            <span>Mã phiếu: <strong>${testRec.id}</strong> • Thời gian: <strong>${testRec.createdAt}</strong></span><br/>
+            <span class="text-[11px] text-emerald-700">Hãy mở file Google Sheet của Bác sĩ để kiểm tra dòng mới vừa được ghi vào nhé!</span>
+          `;
+          resBox.classList.remove('hidden');
+        }
+        showCmsNotification('Gửi bản ghi thử nghiệm lên Google Sheet thành công!');
+      } catch (err) {
+        if (resBox) {
+          resBox.className = 'p-3.5 rounded-2xl text-xs bg-rose-50 border border-rose-200 text-rose-900';
+          resBox.innerHTML = `<strong>Lỗi khi gửi dữ liệu:</strong> ${err.message || 'Không thể kết nối tới Google Apps Script URL. Hãy kiểm tra quyền truy cập (Who has access: Anyone).'}`;
+          resBox.classList.remove('hidden');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>🧪</span> Gửi Dữ Liệu Thử Nghiệm (Test Record)';
+        }
+      }
+    }
+
+    function copyGoogleAppsScriptCode() {
+      const codeEl = document.getElementById('googleAppsScriptCodeBlock');
+      if (codeEl && navigator.clipboard) {
+        navigator.clipboard.writeText(codeEl.innerText.trim()).then(() => {
+          const feedback = document.getElementById('copyAppsScriptFeedback');
+          if (feedback) {
+            feedback.classList.remove('hidden');
+            setTimeout(() => feedback.classList.add('hidden'), 4000);
+          }
+          showCmsNotification('Đã sao chép toàn bộ mã Google Apps Script vào bộ nhớ tạm!');
+        }).catch(() => {});
+      }
+    }
+
+    async function syncAllLocalConsultsToGoogleSheet() {
+      const list = getConsultRecords();
+      if (!list.length) {
+        alert('Hiện tại chưa có đơn đặt lịch nào trên trình duyệt để đồng bộ.');
+        return;
+      }
+      if (!SITE_CONFIG.googleSheetUrl || !SITE_CONFIG.googleSheetUrl.trim()) {
+        alert('Vui lòng nhập và Lưu Google Sheets Web App URL trước khi đồng bộ!');
+        return;
+      }
+      if (!confirm(`Bạn có muốn gửi toàn bộ ${list.length} đơn đặt lịch trong danh sách lên Google Sheet không?`)) return;
+
+      let count = 0;
+      for (const item of list) {
+        await sendRecordToGoogleSheet(item);
+        item.syncedToSheet = true;
+        count++;
+      }
+      saveConsultRecords(list);
+      showCmsNotification(`Đã đồng bộ thành công ${count} đơn đặt lịch lên Google Sheet!`);
     }
 
     function copyBankAccount() {
@@ -2683,6 +3113,12 @@
       );
 
       // Bake current SITE_CONFIG into DEFAULT_SITE_CONFIG
+      const cfgJson = JSON.stringify(SITE_CONFIG, null, 6);
+      docClone = docClone.replace(
+        /const DEFAULT_SITE_CONFIG = \{[\s\S]*?\};/,
+        `const DEFAULT_SITE_CONFIG = ${cfgJson};`
+      );
+
       const fullHtml = '<!DOCTYPE html>\n' + docClone;
       const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
